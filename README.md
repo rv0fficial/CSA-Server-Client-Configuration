@@ -118,7 +118,7 @@ To do that, we must know the MAC address of those interfaces (VMnet2).
 
    - Open a terminal and run the command `nmtui`.
    - Navigate to "Edit Connection."
-   - Select the adapter used in VMnet2 and edit it.
+   - Select the adapter used in VMnet2 and edit it (To verify the VMnet2 adapter, use the earlier noted MAC address).
    - In IPv4 settings, select the type as Manual and enter the following IP configurations:
 
      ```
@@ -138,10 +138,11 @@ To do that, we must know the MAC address of those interfaces (VMnet2).
 
 1. Configure the Network Adapter connected to VMnet2 using the following details:
 
+   To verify the VMnet2 adapter, use the earlier noted MAC address
    ```
    IP address: 10.0.1.3/24
    Gateway: 10.0.1.1
    ```
 
-2. Activate the connection using the GUI.
+3. Activate the connection using the GUI.
 
