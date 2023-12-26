@@ -35,7 +35,7 @@ Assign the network interface using the `DHCPDARGS` line, e.g., `DHCPDARGS=eno335
 
 
 ```bash
-DHCPDARGS=eno335XXXXXXX
+DHCPDARGS=VMnet2
 ```
 
 Go to the mentioned file and paste the above-mentioned line into that file. 
@@ -45,7 +45,7 @@ You can also use the profile name, but there shouldn't be any spaces in that nam
 After that, copy the sample DHCP configuration file to the designated directory:
 
 ```bash
-cp /usr/share/doc/dhcp-4.1.1/dhcpd.conf.sample /etc/dhcp/dhcpd.conf
+cp /usr/share/doc/dhcp-4.2.5/dhcpd.conf.example/etc/dhcp/dhcpd.conf
 ```
 The DHCP version might vary depending on the time. Therefore, it is better to press the `Tab` key on the keyboard to auto-fill the above-line version part. 
 
@@ -58,8 +58,8 @@ vi /etc/dhcp/dhcpd.conf
 Make the changes as shown below (Set the domain name and domain-name servers).
 
 ```bash
-option domain-name dsnm.sub
-option domain-name-servers server.unixmen.local
+option domain-name "csa.sub";
+option domain-name-servers server.unixmen.local;
 ```
 
 And, ensure to uncomment the line `authoritative;` if this DHCP server is official for the local network.
@@ -72,7 +72,7 @@ below:
 subnet 10.0.1.0 netmask 255.255.255.0 {
   range 10.0.1.20 10.0.1.30;
   option domain-name-servers server.unixmen.local;
-  2 option domain-name "dsnm.sub";
+  option domain-name "csa.sub";
   option routers 10.0.1.1;
   option broadcast-address 10.0.1.255;
   default-lease-time 600;
@@ -86,7 +86,7 @@ you’ll have issues while starting dhcpd service.
 Start the DHCP server service and set it to start automatically on every reboot:
 
 ```bash
-service dhcpd start
+systemctl start dhcpd
 ```
 If you want to start up the DHCP server at logon to the server session use;
 
@@ -102,7 +102,7 @@ Verify the DHCP server status using:
 systemctl status dhcpd
 ```
 
-Ensure that DHCP is active and running. On the client side, change the IP settings to Automatic (DHCP). Use the following command to check the IP address assigned:
+Ensure that DHCP is active and running. On the client side (Fedora), change the IP settings to Automatic (DHCP). Use the following command to check the IP address assigned:
 
 ```bash
 ifconfig
