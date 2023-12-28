@@ -10,4 +10,4 @@ $TTL	86400
 @	IN	A	10.0.1.2
 @	IN	A	10.0.1.3
 mlb-dc1-centos7		IN	A	10.0.1.2
-csa-cli-fedora28	IN	A	10.0.1.3
+csa-cli-fedora29	IN	A	10.0.1.3
