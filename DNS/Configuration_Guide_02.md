@@ -8,27 +8,44 @@ This lab is designed to provide students with hands-on experience in installing 
 
 1. Open the DNS server configuration file for editing with root privileges:
    ```bash
-   [root@server ~]# vi /etc/named.conf
+   vi /etc/named.conf
    ```
 2. Add two zones to the `named.conf` file: one forward lookup zone and one reverse lookup zone.
 
    ```bind
-   // ... (existing configurations)
+   options {
 
-   ##### Forward Lookup Zone #####
-   zone "ns" IN {
-       type master;
-       file "forward.csa.lk";
-       allow-update { none; };
-   };
+   [...]
+   
+	listen-on port 53 { 127.0.0.1; 10.0.1.2; };
 
-   ##### Reverse Lookup Zone #####
-   zone "1.0.10.in-addr.arpa" IN {
-       type master;
-       file "reverse.csa.lk";
-       allow-update { none; };
+   [...]
+   
+	allow-query     { localhost; 10.0.1.0/24; };
+
+   [...]
+   
    };
    ```
+
+   In the 'option' section, the lines mentioned above should only be changed. The following part should be directly added to this file.  
+
+   ```bind
+   //forward look up zone
+   zone "ns" IN {
+   type master;
+   file "forward.csa.lk";
+   allow-update { none; };
+   };
+
+   //reverse look up zone
+   zone "1.0.10.in-addr.arpa" IN { 
+   type master;
+   file "reverse.csa.lk";
+   allow-update { none; };
+   };
+   ```
+   The correct config file is stored in this path: DNS/Config_Files/named.conf
 
 3. Save and close the file.
 
@@ -36,12 +53,12 @@ This lab is designed to provide students with hands-on experience in installing 
 
 4. Change to the named directory to create zone files:
    ```bash
-   [root@server ~]# cd /var/named
+   cd /var/named
    ```
 
 5. Create the forward zone file (`forward.csa.lk`):
    ```bash
-   [root@server named]# vi forward.csa.lk
+   vi forward.csa.lk
    ```
    Add the following lines to the file:
 
@@ -52,20 +69,22 @@ This lab is designed to provide students with hands-on experience in installing 
            3600        ;Refresh
            1800        ;Retry
            604800      ;Expire
-           86400      ) ;Minimum TTL
-
+           86400       ;Minimum TTL
+   )
    @       IN  NS          mlb-dc1-centos7.csa.lk.
-   @       IN  A           10.0.1.5  <- Provide your server IP address
-   @       IN  A           10.0.1.10 <- Provide your client IP address
-   mlb-dc1-centos7  IN  A   10.0.1.5 <- Provide your server IP address
-   <client hostname>    IN  A   10.0.1.6 <- Provide your client IP address
+   @       IN  A           10.0.1.2  <- Provide your server IP address
+   @       IN  A           10.0.1.3 <- Provide your client IP address
+   mlb-dc1-centos7  IN  A   10.0.1.2 <- Provide your server IP address
+   csa-cli-fedora29    IN  A   10.0.1.3 <- Provide your client IP address
    ```
+   
+   The correct config file is stored in this path: DNS/Config_Files/forward.csa.lk
 
 6. Save and close the file.
 
 7. Create the reverse zone file (`reverse.csa.lk`):
    ```bash
-   [root@server named]# vi reverse.csa.lk
+   vi reverse.csa.lk
    ```
    Add the following lines to the file:
 
@@ -80,11 +99,13 @@ This lab is designed to provide students with hands-on experience in installing 
 
    @       IN  NS          mlb-dc1-centos7.csa.lk.
    @       IN  PTR         csa.lk.
-   server       IN  A   10.0.1.5  <- Provide your server IP address
-   client       IN  A   10.0.1.10 <- Provide your server IP address
-   5     IN  PTR         mlb-dc1-centos7.csa.lk.
-   10    IN  PTR         <client hostname>.
+   mlb-dc1-centos7       IN  A   10.0.1.2  <- Provide your server IP address
+   csa-cli-fedora29      IN  A   10.0.1.3 <- Provide your server IP address
+   2     IN  PTR         mlb-dc1-centos7.csa.lk.
+   3    IN  PTR         csa-cli-fedora29.csa.lk.
    ```
+
+   The correct config file is stored in this path: DNS/Config_Files/reverse.csa.lk
 
 8. Save and close the file.
 
@@ -94,20 +115,20 @@ This lab is designed to provide students with hands-on experience in installing 
 
 10. Stop the name server and DHCP service if running:
     ```bash
-    [root@server ~]# service dhcpd stop
-    [root@server ~]# service named stop
+    service dhcpd stop
+    service named stop
     ```
 
 11. Open and edit `dhcpd.conf` file:
     ```bash
-    [root@server ~]# vi /etc/dhcp/dhcpd.conf
+    vi /etc/dhcp/dhcpd.conf
     ```
 
 12. Make the necessary changes to set the domain name and domain-name servers.
 
     ```dhcp
     # ...
-    option domain-name "csa.lk";
+    option domain-name "csa.sub";
     option domain-name-servers mlb-dc1-centos7.csa.lk;
     # ...
     subnet 10.0.1.0 netmask 255.255.255.0 {
@@ -123,38 +144,38 @@ This lab is designed to provide students with hands-on experience in installing 
 
 14. Allow DNS communication via the CentOS firewall:
     ```bash
-    [root@server ~]# firewall-cmd --permanent --add-port=53/udp
+    firewall-cmd --permanent --add-port=53/udp
     ```
 
 15. Load the new firewall rules:
     ```bash
-    [root@server ~]# firewall-cmd --reload
+    firewall-cmd --reload
     ```
 
 16. Test DNS configuration and zone files for syntax errors:
     ```bash
-    [root@server ~]# named-checkconf /etc/named.conf
-    [root@server ~]# named-checkzone csa.lk /var/named/forward.csa.lk
-    [root@server ~]# named-checkzone csa.lk /var/named/reverse.csa.lk
+    named-checkconf /etc/named.conf
+    named-checkzone csa.lk /var/named/forward.csa.lk
+    named-checkzone csa.lk /var/named/reverse.csa.lk
     ```
 
 17. Restart DHCP and DNS services:
     ```bash
-    [root@server ~]# service dhcpd start
-    [root@server ~]# service named start
+    service dhcpd start
+    service named start
     # OR
-    [root@server ~]# service dhcpd restart
-    [root@server ~]# service named restart
+    service dhcpd restart
+    service named restart
     ```
 
 ## Step 05 - Test DNS Server
 
 18. Test DNS Server using the following commands:
     ```bash
-    [root@server ~]# dig csa.lk
-    [root@server ~]# dig mlb-dc1-centos7.csa.lk
-    [root@server ~]# nslookup mlb-dc1-centos7.csa.lk
-    [root@server ~]# nslookup csa.lk
+    dig csa.lk
+    dig mlb-dc1-centos7.csa.lk
+    nslookup mlb-dc1-centos7.csa.lk
+    nslookup csa.lk
     ```
 
 ## Step 06 - Configuration on Fedora Client
