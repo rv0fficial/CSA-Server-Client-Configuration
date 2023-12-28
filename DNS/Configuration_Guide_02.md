@@ -168,6 +168,29 @@ This lab is designed to provide students with hands-on experience in installing 
     service named restart
     ```
 
+Before going futher, perform following things..
+
+Change to the this directory to edit the VMnet2 file:
+    ```bash
+    cd /etc/sysconfig/network-scripts/
+    vi ifcfg-ens33
+    ```
+
+Then add the following line to that file 
+
+   ```bind
+   DNS=10.0.1.2
+   ```
+
+OR instead of the above two steps, you can go to the `nmtui` and select the network adapter (VMnet2). 
+Implement the DNS record to it and save the configurations.
+
+Also inorder to run the `dig` commands, you have to install the BIND Utilities. (Remeber to turn on the NAT)
+
+   ```bind
+   yum install bind-utils
+   ```
+
 ## Step 05 - Test DNS Server
 
 18. Test DNS Server using the following commands:
@@ -184,12 +207,12 @@ This lab is designed to provide students with hands-on experience in installing 
 
 20. Restart its network services:
     ```bash
-    [root@server ~]# service network restart
+    service network restart
     ```
 
 21. Use the `hostname` command to check the machine's hostname:
     ```bash
-    [root@localhost ~]# hostname
+    hostname
     ```
 
 22. Follow the procedure from DNS-Part 01 in the lab sheet to change the Fedora machine's hostname.
