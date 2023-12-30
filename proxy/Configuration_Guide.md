@@ -2,71 +2,91 @@
 
 ## 1. Configure Squid Proxy Server
 
-### 1.1 Stop DNS and DHCP
+1. Stop DNS and DHCP
 
-```bash
-# Command to stop DNS and DHCP services
-service dhcpd stop
-service named stop
-```
+    ```bash
+    service dhcpd stop
+    service named stop
+    ```
 
-### 1.2 Checking Squid Availability
+2. Checking Squid Availability
 
-```bash
-# Command to check if Squid is available
-squid -v
-```
+    ```bash
+    squid -v
+    ```
 
-### 1.3 Checking the Internet Connection
+    This command will display the version of Squid if it's installed. 
+    If Squid is not installed, you will likely see a message indicating that the command is not found or not recognized. 
 
-```bash
-# Command to check internet connection
-ping google.com
-```
+3. Checking the Internet Connection
 
-### 1.4 Squid Install Command
+    ```bash
+    ping google.com
+    ```
 
-```bash
-# Command to install Squid
-yum install squid
-```
+4. Installing Squid
 
-### 1.5 Installing Squid
+    ```bash
+    yum install squid
+    ```
 
-```bash
-# Command to install Squid
-yum install squid
-```
+5. Checking Squid
 
-### 1.6 Checking Squid
+    ```bash
+    systemctl status squid
+    ```
 
-```bash
-# Command to check Squid status
-systemctl status squid
-```
+6. Before following the below steps, make sure to stop the squid. (IMPORTANT)
 
-### 1.7 Start Squid
+    ```bash
+    systemctl stop squid
+    ```
+    
+7. Check whether the date, time and time zone in CentOS is correct or not.
+
+    ```bash
+    date
+    timedatectl
+    ```
+
+    If it is incorrect according to the actual dates, follow the steps below.
+
+8. Change the false time zone to the real one. 
+
+    ```bash
+    timedatectl set-timezone Asia/Colombo
+    ```
+    
+    Turn off your vmnat adapter and turn on your NAT adapter
+
+9. Install Command for NTP
+
+    ```bash
+    yum install ntp
+    ```
+    
+    if that didn’t work try running `yum install ntpd`
+   
+11. Enabling NTPD
+
+    ```bash
+    systemctl enable ntpd
+    ```
+
+12. Run systemctl start ntpd
+
+    ```bash
+    systemctl start ntpd
+    ```
+
+Start Squid
 
 ```bash
 # Command to start Squid
 systemctl start squid
 ```
 
-### 1.8 Enable Squid
-
-```bash
-# Command to enable Squid on system startup
-systemctl enable squid
-```
-
-### 1.9 Squid.conf File Command
-
-```bash
-# Command to open squid.conf file
-vi /etc/squid/squid.conf
-```
-
-### 1.10 Before Edit the squid.conf
+Squid.conf File Command
 
 ```bash
 # Command to view squid.conf before editing
@@ -154,41 +174,6 @@ vi /var/named/reverse.csa.lk
 Edit the reverse.csa.lk file to add resource records for the proxy.
 
 ## 5. Implement SSL in the Proxy Environment
-
-### 5.1 Checking the Date and Time
-
-```bash
-# Command to check the date and time
-date
-```
-
-### 5.2 Install Command for NTP
-
-```bash
-# Command to install NTP
-yum install ntp
-```
-
-### 5.3 Installing NTP
-
-```bash
-# Command to install NTP
-yum install ntp
-```
-
-### 5.4 Enabling NTPD
-
-```bash
-# Command to enable NTPD
-systemctl enable ntpd
-```
-
-### 5.5 Run systemctl start ntpd
-
-```bash
-# Command to start NTPD
-systemctl start ntpd
-```
 
 ### 5.6 Checking the Date and Time
 
