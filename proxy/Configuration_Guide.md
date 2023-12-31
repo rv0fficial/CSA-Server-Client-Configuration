@@ -79,6 +79,82 @@
     systemctl start ntpd
     ```
 
+## 2. Create a Resource Record for the Proxy in Your DNS Server
+
+13. Command for Open forward.csa.lk File
+
+    ```bash
+    vi /var/named/forward.csa.lk
+    ```
+
+14. Edit the forward.csa.lk file to add resource records for the proxy.
+
+    ```bash
+    proxy-centos7		IN	A	10.0.1.2
+    ```
+    
+    The config file is stored in this path: proxy/Config_Files/forward.csa.lk
+    
+16. Command for Open reverse.csa.lk File
+
+    ```bash
+    vi /var/named/reverse.csa.lk
+    ```
+
+16. Edit the reverse.csa.lk file to add resource records for the proxy.
+
+    ```bash
+    proxy-centos7 		IN	A	10.0.1.2
+    [...]
+    2	IN	PTR	proxy-centos7.csa.lk.
+    ```
+
+    The config file is stored in this path: proxy/Config_Files/reverse.csa.lk
+
+## 2. Squid Cache Directory Setup
+
+This document outlines the steps to set up a cache directory for Squid proxy server.
+
+17. Change to the Squid directory:
+
+    ```bash
+    cd /var/spool/squid
+    ```
+
+18. Create a cache directory:
+
+    ```bash
+    mkdir cache
+    ```
+
+19. Set ownership to the Squid user and group:
+
+    ```bash
+    chown squid:squid cache/
+    ```
+
+20. Set permissions recursively:
+
+    ```bash
+    chmod -R 750 cache/
+    ```
+
+21. Update Squid configuration to use the new cache directory:
+
+    Open the Squid configuration file (usually located at `/etc/squid/squid.conf`) and find the `cache_dir` and `coredump_dir` directives. Change them to:
+
+    ```plaintext
+    cache_dir /var/spool/squid/cache
+    coredump_dir /var/spool/squid/cache
+    ```
+
+    Save the changes and exit the text editor.
+
+Remember to restart or reload Squid after making changes to the configuration.
+
+
+
+
 Start Squid
 
 ```bash
@@ -149,29 +225,8 @@ curl -x http://<proxy_ip>:3128 http://www.google.com
 
 Edit the Squid.conf file to add a cache replacement policy.
 
-## 4. Create a Resource Record for the Proxy in Your DNS Server
 
-### 4.1 Command for Open forward.csa.lk File
 
-```bash
-# Command to open forward.csa.lk file
-vi /var/named/forward.csa.lk
-```
-
-### 4.2 Forward.csa.lk
-
-Edit the forward.csa.lk file to add resource records for the proxy.
-
-### 4.3 Command for Open reverse.csa.lk File
-
-```bash
-# Command to open reverse.csa.lk file
-vi /var/named/reverse.csa.lk
-```
-
-### 4.4 Reverse.csa.lk
-
-Edit the reverse.csa.lk file to add resource records for the proxy.
 
 ## 5. Implement SSL in the Proxy Environment
 
