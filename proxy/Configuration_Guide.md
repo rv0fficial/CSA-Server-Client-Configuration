@@ -2,6 +2,32 @@
 
 ## 1. Configure Squid Proxy Server
 
+After configuring the Squid® proxy server check whether you can access internet through the proxy.
+
+1. **Fedora Client (VMnet2) to CentOS Server:**
+   - The Fedora client sends its HTTP requests to the CentOS server's IP address associated with the VMnet2 adapter (e.g., 10.0.1.2).
+
+2. **CentOS Server (Squid Proxy) Processes the Request:**
+   - Squid proxy running on the CentOS server (listening on the VMnet2 IP address) processes the incoming HTTP requests from the Fedora client.
+
+3. **CentOS Server to Internet (NAT Adapter):**
+   - After processing, if the request requires internet access, Squid forwards the request to the internet using the CentOS server's NAT adapter.
+
+4. **Internet Response to CentOS Server (NAT Adapter):**
+   - The internet responds to the request, and the response is sent back to the CentOS server via the NAT adapter.
+
+5. **CentOS Server (Squid Proxy) to Fedora Client (VMnet2):**
+   - Squid receives the internet response and sends it back to the Fedora client over the VMnet2 adapter.
+
+6. **Fedora Client Processes the Response:**
+   - The Fedora client processes the response received from the CentOS server and displays the content.
+
+In summary, the CentOS server acts as an intermediary (proxy) between the Fedora client and the internet. The Fedora client sends its requests to the CentOS server, which, in turn, forwards them to the internet and returns the responses to the Fedora client. The NAT adapter in the CentOS server enables internet connectivity for the Squid proxy.
+
+---
+
+### Centos Settings
+
 1. Stop DNS and DHCP
 
     ```bash
@@ -59,7 +85,7 @@
     
     Turn off your vmnat adapter and turn on your NAT adapter
 
-9. Install Command for NTP
+10. Install Command for NTP
 
     ```bash
     yum install ntp
@@ -78,6 +104,127 @@
     ```bash
     systemctl start ntpd
     ```
+
+    **Note:**
+   The Network Time Protocol (NTP) is not a strict requirement for configuring Squid,
+   but having accurate time settings on your server is generally a good practice.
+   NTP ensures that the system time is synchronized with a reliable time source,
+   which can be important for various system processes, log entries, and SSL/TLS certificates (if used).
+
+14. Squid.conf File Command
+
+    ```bash
+    cat /etc/squid/squid.conf
+    ```
+
+15. Go to the editing mode of squid.conf
+
+    ```bash
+    vi /etc/squid/squid.conf
+    ```
+
+16. Open the Squid configuration file (`/etc/squid/squid.conf`) and verify the `http_port` directive.
+    Ensure that it is correctly configured with the desired IP address and port.
+
+    ```conf
+    http_port 10.0.1.2:3128
+    ```
+
+18. Check the firewall settings to ensure that the port used by Squid is allowed (Allowing TCP Ports). 
+
+    ```bash
+    firewall-cmd --permanent --add-port=3128/tcp
+    firewall-cmd --reload
+    ```
+
+19. Checking squid.conf Errors
+
+    ```bash 
+    squid -k parse
+    ```
+
+20. Restarting Squid
+
+    ```bash
+    systemctl restart squid
+    ```
+    
+21. Examine the Squid logs for more detailed error messages. Check both the `cache.log` and `access.log` files.
+
+    ```bash
+    tail -f /var/log/squid/cache.log
+    tail -f /var/log/squid/access.log
+    ```
+
+**Note:** Remember to turn on both adapters on the centos side while testing.
+
+If NAT is disabled, Squid is unable to bind to the specified IP address and port. 
+(Error message --> "Cannot bind socket FD 11 to 10.0.1.2:3128: (99) Cannot assign requested address")
+
+### Fedora Settings
+
+22. Access Internet through Proxy from Fedora:
+    
+   - Open a web browser on your Fedora client (Typically, when testing a proxy, you would configure the proxy
+     settings directly in the web browser on your Fedora client).
+     
+     Go to the proxy settings and configure it to use the IP address and port where Squid is listening on your CentOS server.
+     This should be the IP address of the vmnet2 adapter on your CentOS server `10.0.1.2`, and the default port for Squid is `3128`.
+    
+   - Disable the NAT adapter on your Fedora machine to ensure that it goes through the Squid proxy.
+   - Try to access a website, and the request should go through the Squid proxy on your CentOS server.
+   - Monitor Squid logs on your CentOS server to verify that requests are being processed.
+
+---
+
+## 2. Squid Cache Directory Setup
+
+This document outlines the steps to set up a cache directory for Squid proxy server.
+
+17. Change to the Squid directory:
+
+    ```bash
+    cd /var/spool/squid
+    ```
+
+18. Create a cache directory:
+
+    ```bash
+    mkdir cache
+    ```
+    This creates a directory named `cache` within the Squid spool directory.
+    
+20. Set ownership to the Squid user and group:
+
+    ```bash
+    chown squid:squid cache/
+    ```
+
+21. Set permissions recursively:
+
+    ```bash
+    chmod -R 750 cache/
+    ```
+
+22. Update Squid configuration to use the new cache directory:
+
+    Open the Squid configuration file (usually located at `/etc/squid/squid.conf`) and find the `cache_dir` and `coredump_dir` directives. Change them to:
+
+    ```plaintext
+    cache_dir /var/spool/squid/cache
+    coredump_dir /var/spool/squid/cache
+    ```
+
+    Save the changes and exit the text editor.
+
+Remember to restart or reload Squid after making changes to the configuration.
+
+
+
+
+
+
+    
 
 ## 2. Create a Resource Record for the Proxy in Your DNS Server
 
@@ -111,49 +258,6 @@
 
     The config file is stored in this path: proxy/Config_Files/reverse.csa.lk
 
-## 2. Squid Cache Directory Setup
-
-This document outlines the steps to set up a cache directory for Squid proxy server.
-
-17. Change to the Squid directory:
-
-    ```bash
-    cd /var/spool/squid
-    ```
-
-18. Create a cache directory:
-
-    ```bash
-    mkdir cache
-    ```
-
-19. Set ownership to the Squid user and group:
-
-    ```bash
-    chown squid:squid cache/
-    ```
-
-20. Set permissions recursively:
-
-    ```bash
-    chmod -R 750 cache/
-    ```
-
-21. Update Squid configuration to use the new cache directory:
-
-    Open the Squid configuration file (usually located at `/etc/squid/squid.conf`) and find the `cache_dir` and `coredump_dir` directives. Change them to:
-
-    ```plaintext
-    cache_dir /var/spool/squid/cache
-    coredump_dir /var/spool/squid/cache
-    ```
-
-    Save the changes and exit the text editor.
-
-Remember to restart or reload Squid after making changes to the configuration.
-
-
-
 
 Start Squid
 
@@ -162,62 +266,18 @@ Start Squid
 systemctl start squid
 ```
 
-Squid.conf File Command
 
-```bash
-# Command to view squid.conf before editing
-cat /etc/squid/squid.conf
-```
 
-### 1.11 Edited squid.conf
 
-```bash
-# Command to edit squid.conf
-vi /etc/squid/squid.conf
-```
 
-### 1.12 Copy Squid Original File to Another File
 
-```bash
-# Command to copy squid.conf to a backup file
-cp /etc/squid/squid.conf /etc/squid/squid.conf.backup
-```
 
-### 1.13 Checking squid.conf Errors
 
-```bash
-# Command to check squid.conf for errors
-squid -k parse
-```
 
-### 1.14 Restarting Squid
 
-```bash
-# Command to restart Squid
-systemctl restart squid
-```
 
-### 1.15 Change Firefox Connection Settings
 
-Update Firefox connection settings to use the proxy.
 
-### 1.16 Allowing TCP & UDP Ports
-
-```bash
-# Commands to allow TCP and UDP ports
-firewall-cmd --permanent --add-port=3128/tcp
-firewall-cmd --permanent --add-port=3128/udp
-firewall-cmd --reload
-```
-
-## 2. Check Internet Access through the Proxy
-
-### 2.1 Checking Internet Access through the Proxy
-
-```bash
-# Command to check internet access through the proxy
-curl -x http://<proxy_ip>:3128 http://www.google.com
-```
 
 ## 3. Enable the Appropriate Cache Replacement Policy
 
