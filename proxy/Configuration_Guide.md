@@ -179,62 +179,138 @@ If NAT is disabled, Squid is unable to bind to the specified IP address and port
 
 ## 2. Squid Cache Directory Setup
 
-This document outlines the steps to set up a cache directory for Squid proxy server.
+Enable caching (set a cache folder and the size of the cache)
 
-17. Change to the Squid directory:
+1. Change to the Squid directory:
 
     ```bash
     cd /var/spool/squid
     ```
 
-18. Create a cache directory:
+2. Create a cache directory:
 
     ```bash
     mkdir cache
     ```
     This creates a directory named `cache` within the Squid spool directory.
     
-20. Set ownership to the Squid user and group:
+3. Set ownership to the Squid user and group:
 
     ```bash
     chown squid:squid cache/
     ```
 
-21. Set permissions recursively:
+   This changes the ownership of the `cache` directory to the `squid` user and group. 
+   It's important for Squid to have the necessary permissions to write to the cache.
+
+4. Set permissions recursively:
 
     ```bash
     chmod -R 750 cache/
     ```
 
-22. Update Squid configuration to use the new cache directory:
+    This sets the permissions for the `cache` directory, allowing the `squid` user to read, write, and execute, while restricting other users.
 
-    Open the Squid configuration file (usually located at `/etc/squid/squid.conf`) and find the `cache_dir` and `coredump_dir` directives. Change them to:
+5. After creating and configuring the cache directory, you need to update the Squid configuration file to specify this directory for caching.
 
-    ```plaintext
-    cache_dir /var/spool/squid/cache
-    coredump_dir /var/spool/squid/cache
+    ```bash
+    vi /etc/squid/squid.conf
     ```
 
-    Save the changes and exit the text editor.
+   ```conf
+   cache_dir ufs /var/spool/squid/cache 100 16 256
+   ```
+   Ensure that this line reflects the correct path to your cache directory.
 
-Remember to restart or reload Squid after making changes to the configuration.
+6. Set Coredump Directory
 
+   Set the coredump directory to the cache directory, you would typically do this with the `coredump_dir` directive:
+   
+   ```conf
+   coredump_dir /var/spool/squid/cache
+   ```
 
+7. Remember to restart Squid after making changes to the configuration:
 
+   ```bash
+   systemctl restart squid
+   ```
 
+---
 
+## 2. Set the Size of the Cache Folder
 
-    
+1. Changing the Cache Size
 
-## 2. Create a Resource Record for the Proxy in Your DNS Server
+   ```bash
+   vi /etc/squid/squid.conf
+   ```
 
-13. Command for Open forward.csa.lk File
+The size of the cache folder can be set as follows,
+
+   ```conf
+   cache_dir ufs /var/spool/squid/cache 2000 16 256
+   ```
+
+1. **Type of Cache (`ufs`):**
+   - `ufs` stands for "Unix File System," which is a type of cache storage on the local file system.
+
+2. **Path to Cache Directory (`/var/spool/squid/cache`):**
+   - This is the location on your file system where Squid will store its cache.
+
+3. **Directory Size (`2000`):**
+   - This value represents the total size of the cache directory in megabytes. In this example, it's set to 2000 MB, which is equivalent to 2 GB.
+
+4. **Minimum Space Required (`16`):**
+   - This is the minimum amount of disk space that Squid requires to be available in the cache directory before it considers storing more objects.
+     In this case, it's set to 16 MB.
+
+5. **Maximum Object Size (`256`):**
+   - This is the maximum size of an individual object that Squid will store in the cache. In this example, it's set to 256 KB.
+
+These values help control the behavior of the cache. For instance, Squid won't store objects larger than the specified maximum object size (`256 KB`), 
+and it won't consider storing objects if the available disk space falls below the minimum space required (`16 MB`).
+
+---
+
+## 3. Enable the Appropriate Cache Replacement Policy
+
+To enable the appropriate cache replacement policy in Squid, you can use the `cache_replacement_policy` directive in your Squid configuration file. The cache replacement policy determines how Squid selects objects to remove from the cache when it reaches its storage limits. Common cache replacement policies include LRU (Least Recently Used), LFUDA (Least Frequently Used with Dynamic Aging), and others.
+
+1. Open the Squid configuration file in a text editor. The file is typically located at `/etc/squid/squid.conf`:
+
+   ```bash
+   vi /etc/squid/squid.conf
+   ```
+
+2. Locate or add the `cache_replacement_policy` directive. Uncomment the line if necessary, and set the desired cache replacement policy.
+   For example, to use the LRU policy:
+
+   ```conf
+   cache_replacement_policy lru
+   ```
+
+   Replace `lru` with the cache replacement policy you want to use.
+
+4. Save the changes and exit the text editor.
+
+5. Restart Squid to apply the changes:
+
+   ```bash
+   sudo systemctl restart squid
+   ```
+
+---
+
+## 4. Create a Resource Record for the Proxy in Your DNS Server
+
+1. Command for Open forward.csa.lk File
 
     ```bash
     vi /var/named/forward.csa.lk
     ```
 
-14. Edit the forward.csa.lk file to add resource records for the proxy.
+2. Edit the forward.csa.lk file to add resource records for the proxy.
 
     ```bash
     proxy-centos7		IN	A	10.0.1.2
@@ -242,13 +318,13 @@ Remember to restart or reload Squid after making changes to the configuration.
     
     The config file is stored in this path: proxy/Config_Files/forward.csa.lk
     
-16. Command for Open reverse.csa.lk File
+3. Command for Open reverse.csa.lk File
 
     ```bash
     vi /var/named/reverse.csa.lk
     ```
 
-16. Edit the reverse.csa.lk file to add resource records for the proxy.
+4. Edit the reverse.csa.lk file to add resource records for the proxy.
 
     ```bash
     proxy-centos7 		IN	A	10.0.1.2
@@ -258,35 +334,7 @@ Remember to restart or reload Squid after making changes to the configuration.
 
     The config file is stored in this path: proxy/Config_Files/reverse.csa.lk
 
-
-Start Squid
-
-```bash
-# Command to start Squid
-systemctl start squid
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## 3. Enable the Appropriate Cache Replacement Policy
-
-### 3.1 Adding a Cache Replacement Policy
-
-Edit the Squid.conf file to add a cache replacement policy.
-
-
-
+---
 
 ## 5. Implement SSL in the Proxy Environment
 
@@ -447,13 +495,6 @@ Load the last webpage after loading the initial 10 pages.
 du -sh /var/spool/squid
 ```
 
-## 7. Set the Size of the Cache Folder
 
-### 7.1 Changing the Cache Size
-
-```bash
-# Command to change the cache size
-vi /etc/squid/squid.conf
-```
 
 Update the cache size in the squid.conf file.
