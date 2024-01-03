@@ -362,12 +362,25 @@ To enable the appropriate cache replacement policy in Squid, you can use the `ca
    ```
 
 5. Create a folder for future certificates:
-   ```bash
-   mkdir -p /var/spool/squid/ssl_db
-   /usr/lib64/squid/ssl_crtd -c -s /var/spool/squid/ssl_db
-   ```
 
-6. Configure Squid for SSL Bump:
+   - The ssl_crtd command does try to create the directory if it doesn't exist, and that's likely the cause of the issue.
+     If the directory already exists, running ssl_crtd with the `-c` flag (create) might encounter conflicts.
+   
+      ```bash
+      # Create the directory only if it doesn't exist
+      mkdir -p /var/spool/squid/ssl_db
+
+      # Run ssl_crtd without -c flag
+      /usr/lib64/squid/ssl_crtd -s /var/spool/squid/ssl_db
+      ```
+
+   - OR run the following without creating the directory.
+
+      ```bash
+      /usr/lib64/squid/ssl_crtd -c -s /var/spool/squid/ssl_db
+      ```
+
+7. Configure Squid for SSL Bump:
    - Open the Squid configuration file (`/etc/squid/squid.conf`) in a text editor.
      ```bash
      vi /etc/squid/squid.conf
@@ -384,7 +397,7 @@ To enable the appropriate cache replacement policy in Squid, you can use the `ca
      sslproxy_cert_error deny all
      ```
 
-7. Configure SSL Interception:
+8. Configure SSL Interception:
    - Add an ACL (Access Control List) to specify which traffic should be intercepted. This typically includes HTTPS traffic.
      ```conf
      acl SSL_ports port 443
@@ -397,18 +410,18 @@ To enable the appropriate cache replacement policy in Squid, you can use the `ca
      http_access deny CONNECT !SSL_ports
      ```
 
-8. Restart Squid:
+9. Restart Squid:
    - After making changes to the configuration file, restart the Squid service to apply the changes:
      ```bash
      sudo systemctl restart squid
      ```
 
-9. Configure Fedora Clients:
+10. Configure Fedora Clients:
    - On the Fedora client machines, set the proxy settings to use the CentOS Squid proxy and specify the correct port (usually 3128).
 
-10. Import CA Certificate:
+11. Import CA Certificate:
    - To avoid SSL certificate warnings on client machines, import the self-signed CA certificate (`squidCA.pem`) generated
-     on the CentOS server into the browsers of Fedora clients.
+     on the CentOS server into the browsers of Fedora clients (Using SFTP (Secure File Transfer Protocol)).
    - The method to import the `squid.der` file into a browser depends on the type of browser.
 
 11. Handle Certificate Trust:
@@ -417,39 +430,24 @@ To enable the appropriate cache replacement policy in Squid, you can use the `ca
 
 ---
 
-
-
-
-
-
 ## 6. Select Leaven Web Pages for the Simulation Test
 
-### 6.1 Clear History in Firefox
+1 Clear History in Firefox
 
-```bash
-# Command to clear history in Firefox
-Ctrl + Shift + Del
-```
+   ```bash
+   Ctrl + Shift + Del
+   ```
 
-### 6.2 Loading 10 Webpages
+2 Loading 10 Webpages
 
+   Open 10 webpages in Firefox.
 
+3 Command for Check the Cache Size
 
-Open 10 webpages in Firefox.
-
-### 6.3 Command for Check the Cache Size
-
-```bash
-# Command to check the cache size
-du -sh /var/spool/squid
-```
-
-### 6.4 Checking nmtui
-
-```bash
-# Command to check nmtui for network settings
-nmtui
-```
+   ```bash
+   # Command to check the cache size
+   du -sh /var/spool/squid
+   ```
 
 ### 6.5 Clear History in Firefox
 
@@ -462,12 +460,6 @@ Ctrl + Shift + Del
 
 Visit the same 10 webpages again without internet connection.
 
-### 6.7 Checking nmtui
-
-```bash
-# Command to check nmtui for network settings
-nmtui
-```
 
 ### 6.8 Loading the Last Web Page
 
@@ -480,6 +472,3 @@ Load the last webpage after loading the initial 10 pages.
 du -sh /var/spool/squid
 ```
 
-
-
-Update the cache size in the squid.conf file.
