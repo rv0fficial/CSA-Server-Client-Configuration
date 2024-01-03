@@ -240,17 +240,17 @@ Enable caching (set a cache folder and the size of the cache)
 
 ## 2. Set the Size of the Cache Folder
 
-1. Changing the Cache Size
+Go to the squid conf file
 
-   ```bash
-   vi /etc/squid/squid.conf
-   ```
+```bash
+vi /etc/squid/squid.conf
+```
 
 The size of the cache folder can be set as follows,
 
-   ```conf
-   cache_dir ufs /var/spool/squid/cache 2000 16 256
-   ```
+```conf
+cache_dir ufs /var/spool/squid/cache 2000 16 256
+```
 
 1. **Type of Cache (`ufs`):**
    - `ufs` stands for "Unix File System," which is a type of cache storage on the local file system.
@@ -338,104 +338,89 @@ To enable the appropriate cache replacement policy in Squid, you can use the `ca
 
 ## 5. Implement SSL in the Proxy Environment
 
-### 5.6 Checking the Date and Time
+1. Generate SSL Certificates:
+   
+   - On your CentOS proxy server, generate a self-signed SSL certificate using the OpenSSL tool. This certificate will be used for SSL interception.
+     
+     ```bash
+     openssl req -new -x509 -days 365 -nodes -out /etc/squid/squidCA.pem -keyout /etc/squid/squidCA.pem
+     ```
 
-```bash
-# Command to check the date and time
-date
-```
+2. Convert the Certificate to DER Format:
 
-### 5.7 Install Command for mod_ssl
+   - Convert the generated certificate to DER format, which can be imported into browsers.
+     
+     ```bash
+     openssl x509 -in /etc/squid/squidCA.pem -outform DER -out /etc/squid/squid.der
+     ```
 
-```bash
-# Command to install mod_ssl
-yum install mod_ssl
-```
+3. Change Ownership and Permissions:
+   
+   ```bash
+   chown squid:squid /etc/squid/squidCA.pem
+   chmod 400 /etc/squid/squidCA.pem
+   ```
 
-### 5.8 Installed mod_ssl
+5. Create a folder for future certificates:
+   ```bash
+   mkdir -p /var/spool/squid/ssl_db
+   /usr/lib64/squid/ssl_crtd -c -s /var/spool/squid/ssl_db
+   ```
 
-```bash
-# Command to verify the installation of mod_ssl
-ls /etc/httpd/modules | grep mod_ssl
-```
+6. Configure Squid for SSL Bump:
+   - Open the Squid configuration file (`/etc/squid/squid.conf`) in a text editor.
+     ```bash
+     vi /etc/squid/squid.conf
+     ```
+   - Add or modify the following lines to enable SSL bumping and configure SSL crtd:
+     ```conf
+     # Squid normally listens to port 3128
+     http_port 3128 ssl-bump generate-host-certificates=on dynamic_cert_mem_cache_size=4MB cert=/etc/squid/squidCA.pem
 
-### 5.9 Changing the Lines in squid.conf
+     # SSL crtd settings
+     sslcrtd_program /usr/lib64/squid/ssl_crtd -s /var/spool/squid/ssl_db -M 4MB
+     sslcrtd_children 5
+     ssl_bump server-first all
+     sslproxy_cert_error deny all
+     ```
 
-```bash
-# Command to edit squid.conf
-vi /etc/squid/squid.conf
-```
+7. Configure SSL Interception:
+   - Add an ACL (Access Control List) to specify which traffic should be intercepted. This typically includes HTTPS traffic.
+     ```conf
+     acl SSL_ports port 443
+     acl Safe_ports port 80         # http
+     acl Safe_ports port 443        # https
+     ```
+   - Modify the `http_access` rules to allow SSL interception for specific ports:
+     ```conf
+     # Deny CONNECT to other than secure SSL ports
+     http_access deny CONNECT !SSL_ports
+     ```
 
-### 5.10 Changing the Lines in squid.conf
+8. Restart Squid:
+   - After making changes to the configuration file, restart the Squid service to apply the changes:
+     ```bash
+     sudo systemctl restart squid
+     ```
 
-Update specific lines in the squid.conf file.
+9. Configure Fedora Clients:
+   - On the Fedora client machines, set the proxy settings to use the CentOS Squid proxy and specify the correct port (usually 3128).
 
-### 5.11 Command for Create a Self-signed SSL Certificate
+10. Import CA Certificate:
+   - To avoid SSL certificate warnings on client machines, import the self-signed CA certificate (`squidCA.pem`) generated
+     on the CentOS server into the browsers of Fedora clients.
+   - The method to import the `squid.der` file into a browser depends on the type of browser.
 
-```bash
-# Command to create a self-signed SSL certificate
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/squid/squid.key -out /etc/squid/squid.crt
-```
+11. Handle Certificate Trust:
+   - Consider configuring the Fedora clients to trust the Squid CA certificate.
+     This may involve adding the CA certificate to the system's trust store or configuring individual applications.
 
-### 5.12 Creating Self-signed SSL Certificate
+---
 
-```bash
-# Command to create a self-signed SSL certificate
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/squid/squid.key -out /etc/squid/squid.crt
-```
 
-### 5.13
 
-Make a trustworthy certificate that may be used in a browser.
 
-### 5.14 Configure the Permissions
 
-```bash
-# Command to configure permissions for SSL certificate
-chmod 600 /etc/squid/squid.*
-chown squid:squid /etc/squid/squid.*
-```
-
-### 5.15 Create a Folder for New Certificates
-
-```bash
-# Command to create a folder for new certificates
-mkdir /etc/squid/cert
-```
-
-### 5.16 Changing Squid Service and Extra Line
-
-```bash
-# Command to edit squid.conf
-vi /etc/squid/squid.conf
-```
-
-### 5.17 Starting Squid
-
-```bash
-# Command to start Squid
-systemctl start squid
-```
-
-### 5.18
-
-Update the Squid service to use SSL.
-
-### 5.19 Running Commands in Fedora Terminal
-
-Run the necessary commands in the Fedora terminal.
-
-### 5.20 Import the Certificates
-
-```bash
-# Command to import the certificates
-cp /etc/squid/squid.crt /usr/share/pki/ca-trust-source/anchors/
-update-ca-trust
-```
-
-### 5.21 Created Certificate
-
-Certificates have been created successfully.
 
 ## 6. Select Leaven Web Pages for the Simulation Test
 
