@@ -432,43 +432,53 @@ To enable the appropriate cache replacement policy in Squid, you can use the `ca
 
 ## 6. Select Leaven Web Pages for the Simulation Test
 
-1 Clear History in Firefox
+1. Clear History in Firefox
 
    ```bash
    Ctrl + Shift + Del
    ```
 
-2 Loading 10 Webpages
+2. Loading 10 Webpages
 
    Open 10 webpages in Firefox.
 
-3 Command for Check the Cache Size
+3. Command for Check the Cache Size
 
    ```bash
    # Command to check the cache size
    du -sh /var/spool/squid
    ```
 
-### 6.5 Clear History in Firefox
+4. Clear History in Firefox
 
-```bash
-# Command to clear history in Firefox
-Ctrl + Shift + Del
-```
+   ```bash
+   # Command to clear history in Firefox
+   Ctrl + Shift + Del
+   ```
 
-### 6.6 Loading  Websites Again
+5. Loading  Websites Again
 
-Visit the same 10 webpages again without internet connection.
+   Visit the same 10 webpages again without internet connection.
 
+6. Loading the Last Web Page
 
-### 6.8 Loading the Last Web Page
+   Load the last webpage after loading the initial 10 pages.
 
-Load the last webpage after loading the initial 10 pages.
+7. Command for Check the Cache Size
 
-### 6.9 Command for Check the Cache Size
+   ```bash
+   # Command to check the cache size
+   du -sh /var/spool/squid
+   ```
 
-```bash
-# Command to check the cache size
-du -sh /var/spool/squid
-```
+8. Removing stored cache in the server
 
+   ```bash
+   rm -rf /var/spool/squid/cache/*
+   ```
+
+Clearing the cache manually using `rm -rf /var/spool/squid/cache/*` while Squid is running might not be sufficient to completely clear the cache. 
+Squid maintains an index and metadata related to cached objects, and manually deleting the cache files might leave behind some of this metadata.
+
+When you restart Squid, it performs internal cleanup and reinitializes the cache, ensuring that the cache index and metadata are in a consistent state. 
+This is likely why you observe that a site cannot be accessed after a server restart but can be accessed if you only clear the cache while Squid is running.
