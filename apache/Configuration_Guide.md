@@ -25,7 +25,7 @@
 
    ```bash
    cd /var/www/html
-   vim index.html
+   vi index.html
    ```
 
 5. Start the Apache Server:
@@ -85,14 +85,14 @@ For this practical, we will self-sign our website and add the CA certificate to 
 6. Set the Apache Web Server to use the created certificates by editing relevant lines in the ssl.conf file:
 
    ```bash
-   vim /etc/httpd/conf.d/ssl.conf
+   vi /etc/httpd/conf.d/ssl.conf
    ```
 
    Uncomment the following lines and change the required values:
 
    ```apache
    DocumentRoot "/var/www/html"
-   ServerName 10.0.1.5:443
+   ServerName 10.0.1.2:443
    SSLEngine on
    SSLCertificateFile /etc/pki/tls/certs/ca.crt
    SSLCertificateKeyFile /etc/pki/tls/private/ca.key
