@@ -189,6 +189,12 @@ If NAT is disabled, Squid is unable to bind to the specified IP address and port
    - Disable the NAT adapter on your Fedora machine to ensure that it goes through the Squid proxy.
    - Try to access a website, and the request should go through the Squid proxy on your CentOS server.
    - Monitor Squid logs on your CentOS server to verify that requests are being processed.
+     ```bash
+     tail -f /var/log/squid/access.log
+     ```
+
+**Note:** In client end(Fedora), you can set up a proxy using various methods, including system-wide settings, environment variables, and configuration files. 
+In this case, configured in the browser settings in the Firefox application, regular web traffic, including HTTP/HTTPS requests, should be directed to the proxy server. But when you use the ping command directly on the Fedora VM, it attempts to send ICMP Echo Request packets to the destination IP address. The Fedora VM is not configured to use this proxy in this scenario, the packets won't be routed through the proxy, and the ping may fail. Because the direct attempts to access external websites using tools like ping won't work as expected.
 
 ---
 
@@ -253,7 +259,7 @@ Enable caching (set a cache folder and the size of the cache)
 
 ---
 
-## 2. Set the Size of the Cache Folder
+## 3. Set the Size of the Cache Folder
 
 Go to the squid conf file
 
@@ -288,7 +294,7 @@ and it won't consider storing objects if the available disk space falls below th
 
 ---
 
-## 3. Enable the Appropriate Cache Replacement Policy
+## 4. Enable the Appropriate Cache Replacement Policy
 
 To enable the appropriate cache replacement policy in Squid, you can use the `cache_replacement_policy` directive in your Squid configuration file. The cache replacement policy determines how Squid selects objects to remove from the cache when it reaches its storage limits. Common cache replacement policies include LRU (Least Recently Used), LFUDA (Least Frequently Used with Dynamic Aging), and others.
 
@@ -317,7 +323,8 @@ To enable the appropriate cache replacement policy in Squid, you can use the `ca
 
 ---
 
-## 4. Create a Resource Record for the Proxy in Your DNS Server
+<!--
+## 5. Create a Resource Record for the Proxy in Your DNS Server
 
 1. Command for Open forward.csa.lk File
 
@@ -350,8 +357,8 @@ To enable the appropriate cache replacement policy in Squid, you can use the `ca
     The config file is stored in this path: proxy/Config_Files/reverse.csa.lk
 
 ---
-
-## 5. Implement SSL in the Proxy Environment
+-->
+## 6. Implement SSL in the Proxy Environment
 
 1. Generate SSL Certificates:
    
@@ -445,7 +452,7 @@ To enable the appropriate cache replacement policy in Squid, you can use the `ca
 
 ---
 
-## 6. Select Leaven Web Pages for the Simulation Test
+## 7. Select Leaven Web Pages for the Simulation Test
 
 1. Clear History in Firefox
 
